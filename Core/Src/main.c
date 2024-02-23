@@ -41,6 +41,7 @@ typedef struct {
 	char *str;
 	int counter;
 	uint16_t large_value;
+  float temperature;
 } my_struct;
 
 /* USER CODE END PTD */
@@ -305,8 +306,8 @@ static void MX_GPIO_Init(void)
 void Sender1_Task (void *argument)
 {
 	my_struct *ptrtostruct;
-
 	uint32_t TickDelay = pdMS_TO_TICKS(2000);
+  float tmp_1 =0;
 	while (1)
 	{
 		char *str = "Entered SENDER1_Task\r\n about to SEND to the queue\r\n";
@@ -319,6 +320,7 @@ void Sender1_Task (void *argument)
 		ptrtostruct->counter = 1+indx1;
 		ptrtostruct->large_value = 1000 + indx1*100;
 		ptrtostruct->str = "HELLO FROM SENDER 1 ";
+    ptrtostruct->temperature = tmp_1 + 0.1;
 
 		/***** send to the queue ****/
 		if (xQueueSend(St_Queue_Handler, &ptrtostruct, portMAX_DELAY) == pdPASS)
@@ -327,8 +329,8 @@ void Sender1_Task (void *argument)
 			HAL_UART_Transmit(&huart2, (uint8_t *)str2, strlen (str2), HAL_MAX_DELAY);
 		}
 
-		indx1 = indx1+1;
-
+		indx1 += 1;
+    tmp_1 += 1;
 		vTaskDelay(TickDelay);
 	}
 }
@@ -337,7 +339,7 @@ void Sender1_Task (void *argument)
 void Sender2_Task (void *argument)
 {
 	my_struct *ptrtostruct;
-
+  float tmp_2 = 0;
 	uint32_t TickDelay = pdMS_TO_TICKS(2000);
 	while (1)
 	{
@@ -350,15 +352,16 @@ void Sender2_Task (void *argument)
 		/**** Load the data into the Structure ****/
 		ptrtostruct->str = "Sender2 says Hii!!!";
 		ptrtostruct->large_value = 2000 + 200*indx2;
-		ptrtostruct->counter = 1+indx2;
+		ptrtostruct->counter = 2+indx2;
+    ptrtostruct->temperature = tmp_2 + 0.05;
 		if (xQueueSend(St_Queue_Handler,&ptrtostruct,portMAX_DELAY) == pdPASS)
 		{
 			char *str2 = " Successfully sent the to the queue\r\nLeaving SENDER2_Task\r\n\n";
 			HAL_UART_Transmit(&huart2, (uint8_t *)str2, strlen (str2), HAL_MAX_DELAY);
 		}
 
-		indx2 = indx2+1;
-
+		indx2 += 1;
+    tmp_2 += 2;
 		vTaskDelay(TickDelay);
 	}
 
@@ -380,8 +383,8 @@ void Receiver_Task (void *argument)
 		{
 			ptr = pvPortMalloc(100 * sizeof (char)); // allocate memory for the string
 
-			sprintf (ptr, "Received from QUEUE:\r\n COUNTER = %d\r\n LARGE VALUE = %u\r\n STRING = %s\r\n\n",Rptrtostruct->counter,Rptrtostruct->large_value, Rptrtostruct->str);
-			HAL_UART_Transmit(&huart2, (uint8_t *)ptr, strlen(ptr), HAL_MAX_DELAY);
+      sprintf (ptr, "Received from QUEUE:\r\n COUNTER = %d\r\n LARGE VALUE = %u\r\n STRING = %s\r\n TEMPERATURE = %.2f\r\n\n",Rptrtostruct->counter,Rptrtostruct->large_value, Rptrtostruct->str, Rptrtostruct->temperature);
+      HAL_UART_Transmit(&huart2, (uint8_t *)ptr, strlen(ptr), HAL_MAX_DELAY);
 
 			vPortFree(ptr);  // free the string memory
 		}
